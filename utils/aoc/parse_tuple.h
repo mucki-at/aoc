@@ -18,8 +18,29 @@ Type parse(StringLike&& string)
     return t;
 }
 
+template<typename Type>
+std::vector<Type> regex_tuples(std::istream& strm, const std::regex& rex, size_t max = size_t(-1))
+{
+    std::vector<Type> result;
+
+    std::istreambuf_iterator<char> begin(strm), end;
+    std::string content(begin, end);    // we have to buffer for regex to work
+    std::sregex_iterator regBegin(content.begin(), content.end(), rex), regEnd;
+
+    while (regBegin != regEnd)
+    {
+        if (result.size() >= max) return result;
+        result.emplace_back(parse<Type>((*regBegin)[1].str()));
+        ++regBegin;
+    }
+    return result;
+}
+
 template<typename... Types>
-std::vector<std::tuple<Types...>> regex_tuples(std::istream& strm, const std::regex& rex, size_t max = size_t(-1))
+std::enable_if_t<
+    std::integral_constant<bool, sizeof...(Types) - 1>::value,
+    std::vector<std::tuple<Types...>>
+> regex_tuples(std::istream& strm, const std::regex& rex, size_t max = size_t(-1))
 {
     std::vector<std::tuple<Types...>> result;
 
